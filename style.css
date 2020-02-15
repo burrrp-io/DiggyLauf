@@ -1,0 +1,14 @@
+h1, p, span, h2, h3, h4, div {
+    font-family: Roboto;
+    text-transform: capitalize;
+}
+
+.uppercase {
+    text-transform: uppercase;
+}
+
+
+.category {
+    background-color: #f8f4f3;
+    padding-top: 50px;
+}
