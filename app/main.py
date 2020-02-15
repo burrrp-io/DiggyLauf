@@ -6,12 +6,20 @@ from sqlite3 import Error
 import pandas as pd
 import random
 from PIL import Image
+import torch
+import torchvision
+from ai.model import SimpleNet
 
 app = FastAPI()
 
 with open("../cats.txt", "r") as f:
     cats = f.read().split("\n")
 
+cats_path = "/home/jannis/data/datasets/images/dogs-vs-cats/root/train/"
+
+model = SimpleNet()
+model.load_state_dict(torch.load("../sweet_cats.pth"))
+model.eval()
 
 create_table_sql = """ CREATE TABLE IF NOT EXISTS cats (
                                     id integer PRIMARY KEY AUTOINCREMENT,
@@ -68,23 +76,33 @@ def get_src(
 
     return 404
 
-# @app.get("/cat")
-# async def rate_cat(
-#     cat_id: str = Query(...),
-#     cute: bool = Query(...)
-#     ):
-#     task = (cat_id, cute)
-#     sql = ''' INSERT INTO cats(cat_id,cute)
-#               VALUES(?,?);'''
-#     print(sql)
-#     with sqlite3.connect("/home/jannis/sqlite3/pythonsqlite.db") as conn:
-#         cur = conn.cursor()
-#         cur.execute(sql, task)
-#         print(cur.lastrowid)
+@app.get("/cat")
+async def rate_cat(
+    cat_id: str = Query(...),
+    cute: bool = Query(...)
+    ):
+    task = (cat_id, cute)
+    sql = ''' INSERT INTO cats(cat_id,cute)
+              VALUES(?,?);'''
+    print(sql)
+    with sqlite3.connect("/home/jannis/sqlite3/pythonsqlite.db") as conn:
+        cur = conn.cursor()
+        cur.execute(sql, task)
+        print(cur.lastrowid)
 
-#     # found = False
-#     # while found == False:
-#     #     cat = cats[random.randint(0, len(cats))]
-
-
-#     return {"id": cats[random.randint(0, len(cats))]}
+    found = False
+    while found == False:
+        cat = cats[random.randint(0, len(cats))]
+        pic = Image.open(cats_path+cat)
+        transform = torchvision.transforms.Compose([
+                    torchvision.transforms.Resize((32,32)),
+                    torchvision.transforms.ToTensor()
+                ])
+        scaled = transform(pic)
+        unsqueezed = scaled.unsqueeze(0)
+        result = model(unsqueezed)
+        label = torch.max(result, 1)[1][0].item()
+        if label == 0:
+            found=True
+    
+    return {"id": cat, "url": "../src/" + cat}
