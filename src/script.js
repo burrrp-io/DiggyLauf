@@ -1,4 +1,4 @@
-const testcats = ["src/cat.2.jpeg", "src/cat.1.jpg", "src/cat.3.jpg", "src/cat.0.jpg"] //{"id":"cat.3456.jpg"}
+const testcats = ["src/cat.2.jpg", "src/cat.1.jpg", "src/cat.3.jpg", "src/cat.0.jpg"] //{"id":"cat.3456.jpg"}
 var i = 0
 
 function vote(id){
