@@ -3,7 +3,6 @@ from starlette.responses import HTMLResponse, FileResponse, StreamingResponse
 import tempfile
 import sqlite3
 from sqlite3 import Error
-import pandas as pd
 import random
 from PIL import Image
 import torch
@@ -53,7 +52,12 @@ def get_src(
     ending = filename.split(".")[-1]
     print("over",ending)
     if ending == "png" or ending == "jpg" or ending == "ico":
-        with open("../src/" + filename, "rb") as f:
+        if filename[0:3] == "cat":
+            path = cats_path
+        else:
+            path = "../src/"
+            
+        with open(path + filename, "rb") as f:
             img = f.read()
             byte_img = bytearray(img)
             with tempfile.NamedTemporaryFile(mode="w+b", suffix="." + ending, delete=False) as FOUT:
@@ -78,9 +82,10 @@ def get_src(
 
 @app.get("/cat")
 async def rate_cat(
-    cat_id: str = Query(...),
+    cat_url: str = Query(...),
     cute: bool = Query(...)
     ):
+    cat_id = cat_url.split("/")[-1]
     task = (cat_id, cute)
     sql = ''' INSERT INTO cats(cat_id,cute)
               VALUES(?,?);'''
@@ -89,6 +94,9 @@ async def rate_cat(
         cur = conn.cursor()
         cur.execute(sql, task)
         print(cur.lastrowid)
+
+    # if cur.lastrowid%64 == 0:
+
 
     found = False
     while found == False:
@@ -105,4 +113,4 @@ async def rate_cat(
         if label == 0:
             found=True
     
-    return {"id": cat, "url": "../src/" + cat}
+    return {"id": cat, "url": "src/" + cat}

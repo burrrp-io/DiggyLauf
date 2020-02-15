@@ -1,0 +1,4 @@
+pytorch==1.0.0
+fastapi==0.42.0
+sqlite3==3.28.0
+pillow==5.4.1
