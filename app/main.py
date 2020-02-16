@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Query, Path, Body
+from fastapi import FastAPI, Query, Path, Body, BackgroundTasks
 from starlette.responses import HTMLResponse, FileResponse, StreamingResponse
 import tempfile
 import sqlite3
@@ -8,6 +8,7 @@ from PIL import Image
 import torch
 import torchvision
 from app.ai.model import SimpleNet
+from app.ai.training import learn
 
 app = FastAPI()
 
@@ -85,22 +86,29 @@ async def rate_cat(
     cat_url: str = Query(...),
     cute: bool = Query(...)
     ):
+
+    global model
+
+    db = "/app/sqlite3/pythonsqlite.db"
+    train_it = False
     cat_id = cat_url.split("/")[-1]
     task = (cat_id, cute)
     sql = ''' INSERT INTO cats(cat_id,cute)
               VALUES(?,?);'''
     print(sql)
-    with sqlite3.connect("/app/sqlite3/pythonsqlite.db") as conn:
+    with sqlite3.connect(db) as conn:
         cur = conn.cursor()
         cur.execute(sql, task)
-        print(cur.lastrowid)
-
-    # if cur.lastrowid%64 == 0:
+        print("last row", cur.lastrowid, flush=True)
+        last = cur.lastrowid
+        if last%64 == 0:
+            train_it = True
 
 
     found = False
     while found == False:
         cat = cats[random.randint(0, len(cats))]
+        print("cat",cat,flush=True)
         pic = Image.open(cats_path+cat)
         transform = torchvision.transforms.Compose([
                     torchvision.transforms.Resize((32,32)),
@@ -112,5 +120,15 @@ async def rate_cat(
         label = torch.max(result, 1)[1][0].item()
         if label == 0:
             found=True
+
+    if train_it == True:
+        with sqlite3.connect(db) as conn:
+            cur = conn.cursor()
+            cur.execute("SELECT cat_id, cute FROM cats WHERE id>?", (last-64,))
+            liste = cur.fetchall()
+            model = learn(liste, model)
+            print("successfully trained", flush=True)
+
+
     
     return {"id": cat, "url": "src/" + cat}
