@@ -4,7 +4,7 @@ var i = 0
 function init() {
     var rand = 0;
     while(rand == 0) {
-        rand = Math.random() * 25000;
+        rand = Math.random() * 2000;
     }
 
     setSource(`src/cat.${Math.round(rand)}.jpg`)
