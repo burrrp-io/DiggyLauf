@@ -7,17 +7,17 @@ import random
 from PIL import Image
 import torch
 import torchvision
-from ai.model import SimpleNet
+from app.ai.model import SimpleNet
 
 app = FastAPI()
 
-with open("../cats.txt", "r") as f:
+with open("/app/cats.txt", "r") as f:
     cats = f.read().split("\n")
 
-cats_path = "/home/jannis/data/datasets/images/dogs-vs-cats/root/train/"
+cats_path = "/app/data/root/train/"
 
 model = SimpleNet()
-model.load_state_dict(torch.load("../sweet_cats.pth"))
+model.load_state_dict(torch.load("/app/sweet_cats.pth"))
 model.eval()
 
 create_table_sql = """ CREATE TABLE IF NOT EXISTS cats (
@@ -27,7 +27,7 @@ create_table_sql = """ CREATE TABLE IF NOT EXISTS cats (
                                 ); """
  
 """ create a database connection to a SQLite database """
-with sqlite3.connect("/home/jannis/sqlite3/pythonsqlite.db") as conn:
+with sqlite3.connect("/app/sqlite3/pythonsqlite.db") as conn:
     print(sqlite3.version)
     try:
         c = conn.cursor()
@@ -40,7 +40,7 @@ with sqlite3.connect("/home/jannis/sqlite3/pythonsqlite.db") as conn:
 # function name is used as description in swagger UI
 # # optional query parameters require a "None" default value
 async def get_query():
-    with open("../index.html", "r") as f:
+    with open("/app/index.html", "r") as f:
         html_content = f.read()
     return HTMLResponse(content=html_content)
 
@@ -55,8 +55,8 @@ def get_src(
         if filename[0:3] == "cat":
             path = cats_path
         else:
-            path = "../src/"
-            
+            path = "/app/src/"
+
         with open(path + filename, "rb") as f:
             img = f.read()
             byte_img = bytearray(img)
@@ -70,11 +70,11 @@ def get_src(
                     return FileResponse(FOUT.name, media_type="image/x-icon")
     
     if  ending == "css":
-        return FileResponse("../src/" + filename, media_type="text/css")
+        return FileResponse("/app/src/" + filename, media_type="text/css")
     elif ending == "js":
-        return FileResponse("../src/" + filename, media_type="application/javascript")
+        return FileResponse("/app/src/" + filename, media_type="application/javascript")
     elif ending == "svg":
-        return FileResponse("../src/" + filename, media_type="image/svg+xml")
+        return FileResponse("/app/src/" + filename, media_type="image/svg+xml")
 
 
 
@@ -90,7 +90,7 @@ async def rate_cat(
     sql = ''' INSERT INTO cats(cat_id,cute)
               VALUES(?,?);'''
     print(sql)
-    with sqlite3.connect("/home/jannis/sqlite3/pythonsqlite.db") as conn:
+    with sqlite3.connect("/app/sqlite3/pythonsqlite.db") as conn:
         cur = conn.cursor()
         cur.execute(sql, task)
         print(cur.lastrowid)
